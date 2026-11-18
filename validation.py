@@ -15,9 +15,9 @@ def valid_voter_id(voter_id):
 
    
 
-def get_number(prompt, valid_choices=None):
+def get_number(prompt, low, high):
     # keep asking until the user types a whole number
-    # if a list of valid choices is given, the number must be in that list
+    # the number must be within the given range
     while True:
         text = input(prompt).strip()
         try:
@@ -25,7 +25,7 @@ def get_number(prompt, valid_choices=None):
         except ValueError:
             print("Please type a number, not letters.")
             continue
-        if valid_choices is None or number in valid_choices:
+        if low <= number <= high:
             return number
         print("That option is not on the menu.")
 
