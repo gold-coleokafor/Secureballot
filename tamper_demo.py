@@ -3,7 +3,7 @@ from database import Database
 from demo_tools import reset_votes, set_vote_count
 
 TAMPER_NAME = "Candidate B"
-CHANGE = 2
+TAMPER_CHANGE = 2
 DEMO_VOTES = {1: 12, 2: 9, 3: 4}
 
 
@@ -57,7 +57,7 @@ def main():
         raise SystemExit(f"{TAMPER_NAME} is not in the database.")
 
     old_count = candidate["vote_count"]
-    new_count = old_count + CHANGE
+    new_count = old_count + TAMPER_CHANGE
     set_vote_count(db, candidate["candidate_id"], new_count)
     print(f"\nSomeone changed {TAMPER_NAME}'s vote_count: "
           f"{old_count} -> {new_count} (audit_count is still "
