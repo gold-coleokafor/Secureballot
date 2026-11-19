@@ -1,35 +1,10 @@
-#!/usr/bin/python3
-"""SecureBallot - tamper demo for the audit screen (Person 5).
-
-This is the "tamper demo preparation (1 pt)" part of Person 5's role. It uses
-Person 2's demo_tools, which are never called from a menu:
-
-    set_vote_count(db, candidate_id, new_count)
-    reset_votes(db)
-
-Run:
-
-    python tamper_demo.py
-
-What happens:
-
-    1. clean election  -> every candidate MATCH, All voters counted: YES
-    2. someone edits Candidate B's vote_count only -> NO MATCH, NO,
-       the named record to check
-    3. reset_votes() restores the numbers -> clean again
-
-The screens are printed through audit.py's own format functions, so the demo
-shows exactly what the group's option 4 screen prints, without waiting for the
-99/0 footer input.
-"""
-
 from audit import build_report, join_names, print_screen
 from database import Database
 from demo_tools import reset_votes, set_vote_count
 
 TAMPER_NAME = "Candidate B"
 CHANGE = 2
-DEMO_VOTES = {1: 12, 2: 9, 3: 4}   # candidate_id -> votes, matching the sketch
+DEMO_VOTES = {1: 12, 2: 9, 3: 4}
 
 
 def banner(title):
@@ -40,7 +15,6 @@ def banner(title):
 
 
 def seed_demo_votes(db):
-    """Add the sample votes only when the election is still empty."""
     if sum(row["vote_count"] for row in build_report(db)["records"]) > 0:
         return
     number = 1

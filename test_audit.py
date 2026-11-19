@@ -1,12 +1,3 @@
-"""Tests for Person 5's results and audit screens.
-
-These are unit tests: they use a small fake Database that returns exactly the
-shapes in the repo's database.py (MySQL), so no MySQL server is needed to run
-them.
-
-    python -m unittest test_audit -v
-"""
-
 import io
 import unittest
 from contextlib import redirect_stdout
@@ -19,8 +10,6 @@ NAMES = ["Candidate A", "Candidate B", "Candidate C"]
 
 
 class FakeDB:
-    """Mimics Person 2's Database return values without connecting to MySQL."""
-
     def __init__(self, votes=(0, 0, 0), voted=0):
         self.candidates = [
             {
@@ -39,7 +28,6 @@ class FakeDB:
         )
 
     def set_vote_count(self, name, value):
-        """Simulate someone editing vote_count only (demo_tools behaviour)."""
         row = self._find(name)
         if row is None:
             raise KeyError(name)
@@ -178,7 +166,6 @@ class AuditScreenTests(unittest.TestCase):
         self.assertIn("Candidate B: 0 / n/a NO MATCH", lines)
 
     def test_voters_who_voted_comes_from_get_audit_counts(self):
-        """The MySQL version reports this number; do not recount the voters."""
         class NoVoters(FakeDB):
             def get_all_voters(self):
                 raise AssertionError("should not need get_all_voters")
@@ -197,8 +184,6 @@ class AuditScreenTests(unittest.TestCase):
 
 
 class MergeFriendlyTests(unittest.TestCase):
-    """Accept the other shapes Person 2 might use after a refactor."""
-
     class Bare:
         def __init__(self, results, audits, voters=None):
             self.results = results
