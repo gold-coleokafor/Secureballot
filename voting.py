@@ -54,13 +54,12 @@ class VotingService:
             input("\nPress Enter to return to Main Menu...")
             return None
 
-        try:
-            voter_id = int(voter_id_str)
-            pin = int(pin_str)
-        except ValueError:
-            print("\nError: Voter ID and PIN must be numeric.")
+        if not voter_id_str.isalnum():
+            print("\nError: Voter ID must be alphanumeric.")
             input("\nPress Enter to return to Main Menu...")
             return None
+        voter_id = voter_id_str
+        pin = pin_str
 
         # Rule 6: Check voter status [2]
         voter = self.db.get_voter(voter_id)
