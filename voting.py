@@ -137,9 +137,11 @@ class VotingService:
             return None
 
         # Step 4: Update Counts
-        success = self.db.add_vote(voter_id, selected_cid)
-        if success:
+        result = self.db.add_vote(voter_id, selected_cid)
+        if result == "ok" or result is True:
             print("\nSuccess: Your vote has been recorded!")
+        elif result == "already_voted":
+            print("\nVoting Blocked: You have already cast your vote.")
         else:
             print("\nError: Failed to record vote.")
 
