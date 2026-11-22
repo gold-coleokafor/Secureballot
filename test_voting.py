@@ -27,9 +27,9 @@ class TestVotingService(unittest.TestCase):
         mock_voter.has_voted = True
         self.mock_db.get_voter.return_value = mock_voter
 
-        with patch('builtins.input', side_effect=['101', '1234', '']):
+        with patch('builtins.input', side_effect=['00101', '1234', '']):
             self.assertIsNone(self.voting_service.run_vote())
-            self.mock_db.get_voter.assert_called_with(101)
+            self.mock_db.get_voter.assert_called_with('00101')
 
     def test_successful_voting_order(self):
         mock_voter = MagicMock()
@@ -39,11 +39,12 @@ class TestVotingService(unittest.TestCase):
         self.mock_db.get_results.return_value = [(1, "Candidate A"), (2, "Candidate B")]
         self.mock_db.add_vote.return_value = True
 
-        # Flow: ID=101, PIN=1234, Candidate=1, Confirm=1
-        with patch('builtins.input', side_effect=['101', '1234', '1', '1', '']):
+        # Flow: ID=V001, PIN=1234, Candidate=1, Confirm=1
+        with patch('builtins.input', side_effect=['V001', '1234', '1', '1', '']):
             result = self.voting_service.run_vote()
-            self.mock_db.check_pin.assert_called_once_with(101, 1234)
-            self.mock_db.add_vote.assert_called_once_with(101, 1)
+            self.mock_db.get_voter.assert_called_once_with('V001')
+            self.mock_db.check_pin.assert_called_once_with('V001', '1234')
+            self.mock_db.add_vote.assert_called_once_with('V001', 1)
             self.assertIsNone(result)
 
 
