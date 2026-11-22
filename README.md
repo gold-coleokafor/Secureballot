@@ -246,5 +246,5 @@ SecureBallot is a classroom prototype, not a secure election system.
 | Cecilia Ndawi | cndawi | Database | `database.py`, `validation.py`, `demo_tools.py`, `tests/test_database.py` |
 | Nyamesomfo Ama Osei-Nimako | noseinimak-dev | Registration and admin | `admin.py`, `README.md`, `tests/test_admin.py` |
 | Irumva Laurette | ilaurette-creator | Voting | `voting.py`, `how_to_vote.py`, `tests/test_voting.py` |
-| Leslie Gaju Ntihemuka | gajuleslie | Results and audit | `audit.py`, `tamper_demo.py`, | `tests/test_audit.py` |
+| Leslie Gaju Ntihemuka | gajuleslie | Results and audit | `audit.py`, `tamper_demo.py`, `tests/test_audit.py` |
 | Benjamin Semakula | bsemakula-blip | Models and demo | `models.py` | `tests/test_models.py` |
