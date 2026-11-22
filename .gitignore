@@ -219,5 +219,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# SecureBallot database file (each computer creates its own)
 *.db
+
+.vscode/

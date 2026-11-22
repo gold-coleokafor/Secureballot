@@ -120,11 +120,6 @@ def total_votes(records):
     return sum(record["vote_count"] for record in records)
 
 
-def total_audit_votes(records):
-    return sum(record["audit_count"] for record in records
-               if record["audit_count"] is not None)
-
-
 def mismatched_candidates(records):
     return [
         record["name"] for record in records
@@ -198,7 +193,6 @@ def build_report(db):
         "records": records,
         "voted": voted,
         "total_votes": total_votes(records),
-        "total_audit_votes": total_audit_votes(records),
         "all_match": not bad,
         "all_counted": (
             None if voted is None else total_votes(records) == voted
