@@ -1,4 +1,4 @@
-# Secureballot
+# SecureBallot
  
 **A transparent voting and audit prototype for the Governance and Infrastructure challenges**
  
@@ -60,5 +60,191 @@ On every sub-screen, **99** returns to the main menu and **0** exits.
  
 - **One shared database object.** `main.py` creates a single `Database` object and passes it to every other class, so only one place talks to the database.
 - **Hosted MySQL database.** The data is stored in a MySQL database hosted online (Aiven). Connection details are read from a `.env` file, so no password is stored in the code.
-
-- 
+- **Secret ballot.** The program stores only *whether* a voter has voted and each candidate's *total*. No record links a voter to the candidate they chose.
+- **One vote per voter.** The voting step checks the voter ID and PIN, and the database refuses a second vote from the same voter.
+- **Two counts for the audit.** Each candidate has a results count and an audit count that are updated together when a vote is cast. If someone edits one without the other, the audit shows NO MATCH for that candidate and does not reveal any voter's identity.
+- **Safe removal.** A voter who has already voted cannot be removed, so the audit stays consistent.
+- **PINs are stored hashed.** The database keeps a SHA-256 hash of the voter ID and PIN together, never the PIN itself.
+### Architecture
+ 
+```
+Keyboard (menu input)
+ |
+ v
+ Python code: Menu -> AdminService / VotingService / Audit
+ |
+ v
+ Database class (MySQL)
+```
+ 
+## Project structure
+ 
+```
+secureballot/
+├── main.py Starts the application
+├── menus.py Main menu loop (class Menu)
+├── database.py All database code (class Database)
+├── validation.py Input checks (menu numbers, voter ID, 4-digit PIN)
+├── models.py Classes: Voter, Candidate, Admin
+├── admin.py Register voter, view voters, remove voter (class AdminService)
+├── voting.py The voting flow (class VotingService)
+├── how_to_vote.py "How to vote" instruction pages
+├── audit.py Results and audit screens (class Audit)
+├── demo_tools.py Demo helpers: tamper with one count, or reset all votes
+├── tamper_demo.py Scripted tampering demo (audit before, during and after)
+├── .env.example Template for your database settings
+├── tests/ Unit tests, one file per module
+│ ├── __init__.py
+│ ├── test_menus.py
+│ ├── test_database.py
+│ ├── test_admin.py
+│ ├── test_voting.py
+│ ├── test_audit.py
+│ └── test_models.py
+├── .gitignore
+└── README.md
+```
+ 
+## Requirements
+ 
+- **Python 3** (tested with Python 3.14)
+- **A MySQL database.** Our team database is hosted on Aiven. Ask the team for the connection details.
+- **Two Python libraries:** `mysql-connector-python` (connects to MySQL) and `python-dotenv` (reads the `.env` file)
+## Setup and installation
+ 
+1. **Clone the repository**
+```
+git clone <repository-URL>
+cd secureballot
+```
+ 
+2. **Install the Python libraries**
+```
+pip install mysql-connector-python python-dotenv
+```
+ Install both. Without `python-dotenv` the `.env` file is ignored and the database login fails.
+ 
+3. **Create your settings file** from the template:
+ Windows:
+```
+copy .env.example .env
+```
+ macOS or Linux:
+```
+cp .env.example .env
+```
+ 
+4. **Open `.env` and fill in the database details.** The settings are:
+ | Setting | Meaning | Default if not set |
+ |---|---|---|
+ | `DB_HOST` | Database server address | `localhost` |
+ | `DB_PORT` | Database server port | `3306` |
+ | `DB_USER` | Database username | `root` |
+ | `DB_PASSWORD` | Database password | empty |
+ | `DB_NAME` | Name of the database | `secureballot` |
+ | `ADMIN_CODE` | Registration officer code (optional) | `ADMIN123` |
+ For the team's hosted Aiven database, ask the team for the host, port, username and password. Never commit the `.env` file; it is listed in `.gitignore`.
+5. **Run the application.** On the first run, the program creates the tables and the sample data automatically. You don't need to run any SQL by hand.
+## Running the application
+ 
+From the project folder:
+ 
+```
+python main.py
+```
+ 
+On some systems the command is `python3 main.py` or `py main.py`.
+ 
+### Example session
+ 
+```
+WELCOME TO SECUREBALLOT
+What would you like to do today?
+1. Register voter
+2. Vote
+3. View results
+4. Audit
+5. How to vote
+0. Exit
+Type a number (0-5) and press Enter: 0
+Goodbye.
+```
+ 
+To try the full journey: register a voter (option 1, using the admin code), vote as that voter (option 2), then check the results (option 3) and the audit (option 4).
+ 
+## Sample data
+ 
+The program loads this data on the first run, only when the tables are empty.
+ 
+| Item | Value |
+|---|---|
+| Election name | SAMPLE PRESIDENTIAL ELECTION |
+| Candidates | Candidate A, Candidate B, Candidate C |
+| Sample voters (ID / PIN) | V001 / 1234, V002 / 4321, V003 / 1111 |
+| Default admin code | ADMIN123 (can be changed with the ADMIN_CODE setting) |
+ 
+All names, IDs and codes are fake. No real voter or election data is used.
+ 
+## Running the tests
+ 
+Run all tests from the project folder:
+ 
+```
+python -m unittest discover -v
+```
+ 
+The database tests connect with the same settings as the application (from `.env`). Each test creates its own temporary database (named `secureballot_test_` followed by random characters) and deletes it afterwards, so the tests never change your real data. The database user therefore needs permission to create and drop databases.
+ 
+## Demo: simulating tampering
+ 
+Two scripts show that the audit catches tampering. Neither is called from any menu.
+ 
+- `python tamper_demo.py` runs the full demo: a normal election, then a hand-edited count for Candidate B, then the audit showing NO MATCH, then a reset.
+- `python demo_tools.py` is a small menu to tamper with one candidate's vote count, or to reset all votes.
+**Warning:** both scripts change the real data in the database. `tamper_demo.py` adds demo voters (DEMO001 onwards), and resetting sets every count to 0 and lets every voter vote again. Run them only on a demo database.
+ 
+## Input validation and error handling
+ 
+The application is designed not to crash on wrong input:
+ 
+- Letters or symbols where a number is expected give a clear message, and the program asks again.
+- A number outside the menu range is rejected.
+- A voter ID may contain letters and digits only (for example `V001`). A PIN must be exactly 4 digits.
+- A voter ID that is not registered, a wrong PIN, or a second vote attempt each give a clear error message.
+- A wrong admin code is rejected.
+- A duplicate voter ID cannot be registered.
+- A voter who has already voted cannot be removed.
+- Pressing Ctrl+C ends the session politely instead of showing an error.
+## Limitations
+ 
+SecureBallot is a classroom prototype, not a secure election system.
+ 
+- The USSD code is **simulated** in the terminal. A real short code needs a mobile network operator.
+- All data is **fake**, and the app handles **one sample election** at a time.
+- It is **text only** and in **English only**.
+- It is not secure enough for a real election.
+- The app saves **totals**, not each vote separately, so a result cannot be recounted.
+- The audit would not notice if someone changed both a candidate's two counts and the voter records so that they still agree.
+- The program does not save who a voter chose, but it briefly handles both the voter and the choice while a vote is recorded, so secrecy cannot be guaranteed if someone controls the code.
+- A 4-digit PIN has only 10,000 possible values, so even hashed PINs could be guessed quickly.
+- The default admin code is a fixed example code.
+## Troubleshooting
+ 
+| Problem | Likely cause and fix |
+|---|---|
+| `Can't connect to MySQL server` | Check the host and port in `.env`, and that the Aiven database service is running. |
+| `Access denied for user` | The `.env` file is missing or has wrong details, or `python-dotenv` is not installed. Check `.env` and run the `pip install` command from the setup steps. |
+| `ModuleNotFoundError` | A library is not installed. Run the `pip install` command from the setup steps. |
+| `python` is not recognized | Try `py main.py` (Windows) or `python3 main.py`. |
+| Tests fail to import modules | Run them from the project folder with `python -m unittest discover -v`. |
+ 
+## Team and contributions
+ 
+| Team member | GitHub | Role | Files |
+|---|---|---|---|
+| Gold Adaobi Cole-Okafor | gold-coleokafor | Team lead and integration | `main.py`, `menus.py`, `.gitignore`, `tests/test_menus.py` |
+| Cecilia Ndawi | cndawi | Database | `database.py`, `validation.py`, `demo_tools.py`, `tests/test_database.py` |
+| Nyamesomfo Ama Osei-Nimako | noseinimak-dev | Registration and admin | `admin.py`, `README.md`, `tests/test_admin.py` |
+| Irumva Laurette | ilaurette-creator | Voting | `voting.py`, `how_to_vote.py`, `tests/test_voting.py` |
+| Leslie Gaju Ntihemuka | gajuleslie | Results and audit | `audit.py`, `tamper_demo.py`, | `tests/test_audit.py` |
+| Benjamin Semakula | bsemakula-blip | Models and demo | `models.py` | `tests/test_models.py` |
