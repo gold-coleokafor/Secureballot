@@ -37,7 +37,7 @@ class TestVotingService(unittest.TestCase):
         self.mock_db.get_voter.return_value = mock_voter
         self.mock_db.check_pin.return_value = True
         self.mock_db.get_results.return_value = [(1, "Candidate A"), (2, "Candidate B")]
-        self.mock_db.add_vote.return_value = True
+        self.mock_db.add_vote.return_value = "ok"
 
         # Flow: ID=V001, PIN=1234, Candidate=1, Confirm=1
         with patch('builtins.input', side_effect=['V001', '1234', '1', '1', '']):
@@ -46,6 +46,26 @@ class TestVotingService(unittest.TestCase):
             self.mock_db.check_pin.assert_called_once_with('V001', '1234')
             self.mock_db.add_vote.assert_called_once_with('V001', 1)
             self.assertIsNone(result)
+
+    def test_vote_blocked_if_already_voted_at_submission(self):
+        mock_voter = MagicMock()
+        mock_voter.has_voted = False
+        self.mock_db.get_voter.return_value = mock_voter
+        self.mock_db.check_pin.return_value = True
+        self.mock_db.get_results.return_value = [(1, "Candidate A")]
+        self.mock_db.add_vote.return_value = "already_voted"
+
+        with patch('builtins.input', side_effect=['V001', '1234', '1', '1', '']), \
+                patch('builtins.print') as mock_print:
+            self.voting_service.run_vote()
+
+        mock_print.assert_any_call(
+            "\nVoting Blocked: You have already cast your vote."
+        )
+        self.assertFalse(any(
+            call.args == ("\nSuccess: Your vote has been recorded!",)
+            for call in mock_print.call_args_list
+        ))
 
 
 if __name__ == '__main__':
